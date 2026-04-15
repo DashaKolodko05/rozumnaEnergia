@@ -1,5 +1,5 @@
+import "./css/index.css";
 import type { Route } from "./+types";
-
 import App from "./components/app";
 
 export function meta({ }: Route.MetaArgs) {

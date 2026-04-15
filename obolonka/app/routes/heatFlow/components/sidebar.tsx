@@ -1,25 +1,5 @@
 import React, { useState, useCallback, useEffect, type ReactElement } from 'react';
-
-interface NodeData {
-    label: string;
-}
-
-interface CustomNodeProps {
-    data: NodeData;
-}
-
-export const nodeTypes = {
-    house: ({ data }: CustomNodeProps): ReactElement => (
-        <div style={{ padding: 10, background: '#acd6f5d5', borderRadius: 2, border: '1px solid #5ea3d6' }}>
-            🏠 HOUSE: {data.label}
-        </div>
-    ),
-    heat: ({ data }: CustomNodeProps): ReactElement => (
-        <div style={{ padding: 10, background: '#fab8a8', borderRadius: 8, border: '1px solid #e37e69' }}>
-            🔥 HEAT SRC: {data.label}
-        </div>
-    ),
-};
+import '@xyflow/react/dist/style.css';
 
 interface SidebarProps {
     width: number;
@@ -50,7 +30,6 @@ export function Sidebar({ width, setWidth }: SidebarProps): ReactElement {
         },
         [isResizing, setWidth]
     );
-
 
     useEffect(() => {
         if (isResizing) {
@@ -101,7 +80,7 @@ export function Sidebar({ width, setWidth }: SidebarProps): ReactElement {
                     userSelect: 'none',
                 }}
             >
-                Бібліотека вузлів
+                Node Library
             </div>
 
             <div
@@ -120,7 +99,7 @@ export function Sidebar({ width, setWidth }: SidebarProps): ReactElement {
                 <span>🔥</span> Heat Source
             </div>
 
-            {/* GLIDER / RESIZER */}
+            {/* Resizer */}
             <div
                 onMouseDown={startResizing}
                 style={{
@@ -134,9 +113,7 @@ export function Sidebar({ width, setWidth }: SidebarProps): ReactElement {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                }}
-            >
-                {/* ICON */}
+                }}>
                 <div
                     style={{
                         width: '6px',
@@ -167,6 +144,7 @@ export function Sidebar({ width, setWidth }: SidebarProps): ReactElement {
         </aside>
     );
 }
+
 
 const nodeStyle: React.CSSProperties = {
     marginBottom: 12,
