@@ -131,6 +131,7 @@ export function FlowCanvas({ sidebarWidth }: FlowCanvasProps): React.ReactElemen
     };
 
     const updateNodeData = useCallback((nodeId: string, newData: Partial<NodeData>) => {
+        console.log('Updating node:', nodeId, newData);
         setNodes((nds) =>
             nds.map((node) => {
                 if (node.id === nodeId) {

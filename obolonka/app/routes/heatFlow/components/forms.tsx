@@ -8,6 +8,14 @@ interface ConfigFormProps {
 }
 
 export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
+    const [formData, setFormData] = React.useState<NodeData | null>(null);
+
+    React.useEffect(() => {
+        if (node) {
+            setFormData({ ...node.data });
+        }
+    }, [node]);
+
     if (!node) return null;
 
     const isHeat = node.type === 'heat';
@@ -15,10 +23,37 @@ export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
     const ringColor = isHeat ? 'focus:ring-orange-500/20 focus:border-orange-500' : 'focus:ring-blue-500/20 focus:border-blue-500';
     const iconColor = isHeat ? 'text-orange-600' : 'text-blue-600';
 
+    const handleChange = (field: keyof NodeData, value: any) => {
+        setFormData(prev => prev ? ({
+            ...prev,
+            [field]: value
+        }) : null);
+    };
+
+    const hasChanges = JSON.stringify(node.data) !== JSON.stringify(formData);
+
+    const handleSave = () => {
+        const updates: Partial<NodeData> = { label: formData?.label };
+        if (isHeat && formData?.capacity !== '') {
+            updates.capacity = Number(formData?.capacity);
+        }
+        onUpdate(node.id, updates);
+        onClose();
+    };
+
+    // Скасування змін
+    const handleCancel = () => {
+        if (hasChanges) {
+            if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+                onClose();
+            }
+        } else {
+            onClose();
+        }
+    };
+
     return (
-        // Overlay with soft darkening
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-gray-950/40 backdrop-blur-sm p-4">
-            {/* Modal Container */}
             <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-200">
 
                 {/* Header with icon and title */}
@@ -45,7 +80,7 @@ export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
                         </div>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={handleCancel}
                         className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +90,7 @@ export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
                 </div>
 
                 {/* Form Content */}
-                <form onSubmit={(e) => { e.preventDefault(); onClose(); }}>
+                <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                     <div className="px-6 py-6 space-y-5">
                         {/* Label Field */}
                         <div className="space-y-2">
@@ -65,8 +100,8 @@ export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
                             <input
                                 type="text"
                                 className={`w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl block px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-4 ${ringColor}`}
-                                value={node.data.label}
-                                onChange={(e) => onUpdate(node.id, { label: e.target.value })}
+                                value={formData?.label || ''}
+                                onChange={(e) => handleChange('label', e.target.value)}
                                 placeholder="Enter display name"
                             />
                         </div>
@@ -81,8 +116,8 @@ export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
                                     <input
                                         type="number"
                                         className={`w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl block px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-4 ${ringColor}`}
-                                        value={(node.data as any).capacity || ''}
-                                        onChange={(e) => onUpdate(node.id, { capacity: Number(e.target.value) })}
+                                        value={formData?.capacity as number | string || ''}
+                                        onChange={(e) => handleChange('capacity', e.target.value)}
                                         placeholder="Enter capacity in kW"
                                         step="0.1"
                                         min="0"
@@ -98,7 +133,7 @@ export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
                         )}
 
                         {/* Read-only info fields */}
-                        <div className="pt-2 space-y-3">
+                        <div className="pt-2 space-y-3 border-t border-gray-100">
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-gray-500">Node ID</span>
                                 <span className="font-mono text-gray-900 bg-gray-100 px-2 py-0.5 rounded text-xs">
@@ -118,18 +153,30 @@ export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
                     <div className="flex gap-3 px-6 py-5 bg-gray-50 rounded-b-2xl border-t border-gray-100">
                         <button
                             type="button"
-                            onClick={onClose}
-                            className="flex-1 text-gray-700 font-medium rounded-xl text-sm px-4 py-2.5 transition-all hover:bg-gray-100 active:scale-95"
+                            onClick={handleCancel}
+                            className="flex-1 text-gray-700 font-medium rounded-xl text-sm px-4 py-2.5 transition-all hover:bg-gray-200 active:scale-95"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className={`flex-1 text-white font-medium rounded-xl text-sm px-4 py-2.5 shadow-sm transition-all active:scale-95 ${accentColor}`}
+                            disabled={!hasChanges}
+                            className={`flex-1 text-white font-medium rounded-xl text-sm px-4 py-2.5 shadow-sm transition-all active:scale-95 ${hasChanges
+                                    ? `${accentColor} cursor-pointer`
+                                    : 'bg-gray-400 cursor-not-allowed'
+                                }`}
                         >
-                            Done
+                            Save Changes
                         </button>
                     </div>
+
+                    {hasChanges && (
+                        <div className="px-6 pb-4">
+                            <p className="text-xs text-orange-600 flex items-center gap-1">
+                                <span>●</span> You have unsaved changes
+                            </p>
+                        </div>
+                    )}
                 </form>
             </div>
         </div>
