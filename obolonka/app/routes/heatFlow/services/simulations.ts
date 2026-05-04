@@ -1,4 +1,5 @@
 import { type AppNode, isHeatPump, isTankNode, isHouseNode, type HouseNodeData, type TankNodeData } from '../types/types';
+import { calculateHeatSource, calculateKinematicViscosityWater, calculateTankHeatLoss, copTable, CP_WATER, getAirKinematicViscosity, getAirThermalConductivity, getAlphaIn, getAlphaOut, getAlphaRadiation, getAlphaWater, getCOP, getExternalResistance, getInternalResistance, getNusselt, getPipeHeatLoss, getPipeOutletTemperature, getPipeThermalResistance, getRadiationHeatFlow, getReynolds, getTankDeltaQ, getTotalThermalResistance, updateTankTemperature } from './math-func';
 
 export interface ChartDataPoint {
     time: number;
@@ -16,61 +17,6 @@ export interface ChartDataPoint {
     sourceOn: 0 | 1;
     cop: number;
 }
-
-const copTable = [
-    [0,  -25,  -15,  -7,   -5,   0,    2,    7,    12,   20], // tOutside
-    [30, 1.60, 1.85, 2.10, 2.20, 2.36, 2.55, 2.90, 3.20, 3.80],
-    [35, 1.50, 1.75, 2.00, 2.10, 2.26, 2.45, 2.80, 3.10, 3.65],
-    [45, 1.30, 1.50, 1.70, 1.80, 1.95, 2.10, 2.40, 2.70, 3.20],
-    [55, 1.10, 1.25, 1.40, 1.45, 1.55, 1.70, 1.90, 2.15, 2.50],
-];
-
-/**
- * Функція отримання COP для будь-яких температур
- * @param tW - поточна температура води в баку
- * @param tO - поточна температура зовні
- * @param copTable - таблиця COP
- */
-export const getCOP = (tW: number, tO: number, copTable: number[][]): number => {
-    const tOutsides = copTable[0].slice(1);
-    const tWaters = copTable.slice(1).map(row => row[0]);
-
-    // 1. Обмежуємо вхідні дані межами таблиці (щоб не було помилок)
-    const currentTW = Math.max(tWaters[0], Math.min(tWaters[tWaters.length - 1], tW));
-    const currentTO = Math.max(tOutsides[0], Math.min(tOutsides[tOutsides.length - 1], tO));
-
-    // 2. Знаходимо індекси найближчих значень (m1 та m2)
-    const findNeighbors = (val: number, arr: number[]) => {
-        for (let i = 0; i < arr.length - 1; i++) {
-            if (val <= arr[i + 1]) return { idx1: i, idx2: i + 1 };
-        }
-        return { idx1: arr.length - 2, idx2: arr.length - 1 };
-    };
-
-    const nO = findNeighbors(currentTO, tOutsides);
-    const nW = findNeighbors(currentTW, tWaters);
-
-    // 3. Отримуємо 4 опорні точки (прямокутник навколо цільового значення)
-    const q11 = copTable[nW.idx1 + 1][nO.idx1 + 1]; // [tW1, tO1]
-    const q12 = copTable[nW.idx1 + 1][nO.idx2 + 1]; // [tW1, tO2]
-    const q21 = copTable[nW.idx2 + 1][nO.idx1 + 1]; // [tW2, tO1]
-    const q22 = copTable[nW.idx2 + 1][nO.idx2 + 1]; // [tW2, tO2]
-
-    // 4. Лінійна інтерполяція по осі tOutside (горизонтальна)
-    const interpolate = (x: number, x1: number, x2: number, y1: number, y2: number) =>
-        y1 + (x - x1) * (y2 - y1) / (x2 - x1);
-
-    const copAtTW1 = interpolate(currentTO, tOutsides[nO.idx1], tOutsides[nO.idx2], q11, q12);
-    const copAtTW2 = interpolate(currentTO, tOutsides[nO.idx1], tOutsides[nO.idx2], q21, q22);
-
-    // 5. Фінальна інтерполяція по осі tWater (вертикальна)
-    return interpolate(currentTW, tWaters[nW.idx1], tWaters[nW.idx2], copAtTW1, copAtTW2);
-};
-
-const CP_WATER = 4.187; // кДж/(кг·°C)
-const RHO_WATER = 1000;  // кг/м3
-const SIGMA = 5.67e-8;   // Постійна Стефана-Больцмана
-
 
 
 export const runSimulation = ( house: AppNode, tankNode: AppNode, heatPump: AppNode, totalTime: number, deltaTime: number): ChartDataPoint[] => {
@@ -136,11 +82,21 @@ export const runSimulation = ( house: AppNode, tankNode: AppNode, heatPump: AppN
 
         let cop: number = getCOP(tOutside, tTankWater, copTable);
 
-        if (sourceEnabled ) {
-            qSource = (qCop235 / cop235) * cop * deltaTime; // Фактична теплова потужність теплового насоса (кВт) за поточних умов (T_i). Це та кількість тепла, яку пристрій реально видає в систему в даний момент.
-        } else {
-            qSource = 0;
-        }
+        // if (sourceEnabled ) {
+        //     qSource = (qCop235 / cop235) * cop * deltaTime; // Фактична теплова потужність теплового насоса (кВт) за поточних умов (T_i). Це та кількість тепла, яку пристрій реально видає в систему в даний момент.
+        // } else {
+        //     qSource = 0;
+        // }
+
+        qSource = calculateHeatSource(
+            sourceEnabled,
+            tOutside,
+            tTankWater,
+            copTable,
+            qCop235,
+            cop235,
+            deltaTime
+        );// Фактична теплова потужність теплового насоса (кВт) за поточних умов (T_i). Це та кількість тепла, яку пристрій реально видає в систему в даний момент.
 
 
         // ============================================
@@ -169,12 +125,19 @@ export const runSimulation = ( house: AppNode, tankNode: AppNode, heatPump: AppN
         // ============================================
         // 3. ОБЧИСЛЕННЯ ВТРАТ КІЛЬКОСТІ ТЕПЛОТИ БАКОМ (Q tank lost)
         // ============================================
-        const qTankLoss: number = (tTankWater - tOutside) * kLostTank * deltaTime;
+        // const qTankLoss: number = (tTankWater - tOutside) * kLostTank * deltaTime;
+        const qTankLoss = calculateTankHeatLoss(
+            tTankWater,
+            tOutside,
+            kLostTank,
+            deltaTime
+        );
 
         // Діаметр внутрішній труби (d in) для обчислення гідравлічного радіуса та інших параметрів
 
         // Кінематична в'язкість води обчислюється за формулою
-        const nuWater: number = 1.78e-6 / (1 + 0.0337 * tTankWater + 0.000221 * Math.pow(tTankWater, 2));
+        // const nuWater: number = 1.78e-6 / (1 + 0.0337 * tTankWater + 0.000221 * Math.pow(tTankWater, 2));
+        const nuWater = calculateKinematicViscosityWater(tTankWater);
 
 
         // ============================================
@@ -182,45 +145,62 @@ export const runSimulation = ( house: AppNode, tankNode: AppNode, heatPump: AppN
         // ============================================
 
         // температуропровідність води
-        const alphaWater: number = 1.32e-7 * (1 + 0.003 * tTankWater);
+        // const alphaWater: number = 1.32e-7 * (1 + 0.003 * tTankWater);
+        const alphaWater = getAlphaWater(tTankWater);
 
         // Число Прандтля для води (Pr water)
         const pr: number = nuWater / alphaWater;
 
         // Re water – число Рейнольдса для води, що рухається;
-        const re: number = (vFlowPipe * dIn) / nuWater;
+        // const re: number = (vFlowPipe * dIn) / nuWater;
+        const re = getReynolds(vFlowPipe, dIn, nuWater);
 
         // Nu water – критерій Нуссельта;
-        const nusselt: number = 0.023 * Math.pow(re, 0.8) * Math.pow(pr, 0.4);
+        // const nusselt: number = 0.023 * Math.pow(re, 0.8) * Math.pow(pr, 0.4);
+        const nusselt = getNusselt(re, pr);
 
-        const alphaIn: number = nusselt * 0.665 / dIn;
-        const rIn: number = 1 / (alphaIn * Math.PI * dIn * lPipe);
-
+        const alphaIn = getAlphaIn(nusselt, dIn);
+        // const rIn: number = 1 / (alphaIn * Math.PI * dIn * lPipe);
+        const rIn = getInternalResistance(alphaIn, dIn, lPipe); // R внутрішній (R internal)
 
         // R теплового опору труби (R thermal pipe)
-        const rThr: number = Math.log(dOutPipe / dIn) / (kThermalPipe * 2 * Math.PI * lPipe);
+        // const rThr: number = Math.log(dOutPipe / dIn) / (kThermalPipe * 2 * Math.PI * lPipe);
+        const rThr = getPipeThermalResistance(dIn, dOutPipe, kThermalPipe, lPipe);
 
-        // need more research
-        const qRad: number = epsilonPipe * SIGMA * (Math.pow(273 + tBasement, 4) - Math.pow(273 + tOutside, 4));
-        const alphaRad: number = qRad / (tTankWater - tBasement || 1);
+        // Коефіцієнт тепловіддачі з зовнішнього боку труби, що враховує променистий теплообмін (alpha out)
+        // const qRad: number = epsilonPipe * SIGMA * (Math.pow(273 + tBasement, 4) - Math.pow(273 + tOutside, 4));
+        const qRad = getRadiationHeatFlow(
+            epsilonPipe,
+            tBasement,
+            tOutside,
+        );
+        // const alphaRad: number = qRad / (tTankWater - tBasement || 1);
+        const alphaRad = getAlphaRadiation(qRad, tTankWater, tBasement);
 
         // коефіцієнта конвективної тепловіддачі з зовнішнього боку труби (alpha out)
-        const nuAir: number = 1.48e-5 / (1 + 0.003 * tOutside + 0.000221 * tOutside ** 2);
+        // const nuAir: number = 1.48e-5 / (1 + 0.003 * tOutside + 0.000221 * tOutside ** 2);
+        const nuAir = getAirKinematicViscosity(tOutside);
         // теплопровідність повітря (lambda air)
-        const lambdaAir: number = 0.0257 * (1 + 0.003 * tOutside + 0.000221 * tOutside ** 2);
+        // const lambdaAir: number = 0.0257 * (1 + 0.003 * tOutside + 0.000221 * tOutside ** 2);
+        const lambdaAir = getAirThermalConductivity(tOutside);
 
-        const alphaOut: number = (nuAir * lambdaAir) / dOutPipe;
+
+        // const alphaOut: number = (nuAir * lambdaAir) / dOutPipe;
+        const alphaOut = getAlphaOut(nuAir, lambdaAir, dOutPipe);
 
         // Конвективний та променистий теплообміни між твердою циліндричною стінкою труби та навколишнім повітрям
-        const rOut: number = 1 / ((alphaOut + alphaRad) * Math.PI * dOutPipe * lPipe);
+        // const rOut: number = 1 / ((alphaOut + alphaRad) * Math.PI * dOutPipe * lPipe);
+        const rOut = getExternalResistance(alphaOut, alphaRad, dOutPipe, lPipe);
 
 
         // R тотальний = R внутрішній + R теплового опору труби + R зовнішній
-        const rTotal: number = rIn + rThr + rOut;
+        // const rTotal: number = rIn + rThr + rOut;
+        const rTotal = getTotalThermalResistance(rIn, rThr, rOut);
 
 
         // Обчислення втрат кількості теплоти циркуляційною трубою (Q pipe lost)
-        const qPipeLoss: number = ((tTankWater - tBasement) / rTotal) * deltaTime;
+        // const qPipeLoss: number = ((tTankWater - tBasement) / rTotal) * deltaTime;
+        const qPipeLoss = getPipeHeatLoss(tTankWater, tBasement, rTotal, deltaTime);
 
 
         // console.log("LOSSES:");
@@ -236,8 +216,14 @@ export const runSimulation = ( house: AppNode, tankNode: AppNode, heatPump: AppN
         // ============================================
 
         // Обчислення температури на виході циркуляційної труби
-        const tPipeOut: number = tTankWater - ((qPipeLoss / deltaTime) / (vFlowPipe * CP_WATER));
 
+        // const tPipeOut: number = tTankWater - ((qPipeLoss / deltaTime) / (vFlowPipe * CP_WATER));
+        const tPipeOut = getPipeOutletTemperature(
+            tTankWater,
+            qPipeLoss / deltaTime,
+            vFlowPipe,
+            CP_WATER,
+        );
 
 
         // console.log("PIPE:");
@@ -250,13 +236,21 @@ export const runSimulation = ( house: AppNode, tankNode: AppNode, heatPump: AppN
         // ============================================
         let deltaQTank: number = 0;
 
-        if (sourceEnabled) {
-            // Джерело підключено
-            deltaQTank = qSource - qWaterHeating - qTankLoss - qPipeLoss;
-        } else {
-            // Джерело НЕ підключено
-            deltaQTank = - qWaterHeating - qTankLoss - qPipeLoss;
-        }
+        // if (sourceEnabled) {
+        //     // Джерело підключено
+        //     deltaQTank = qSource - qWaterHeating - qTankLoss - qPipeLoss;
+        // } else {
+        //     // Джерело НЕ підключено
+        //     deltaQTank = - qWaterHeating - qTankLoss - qPipeLoss;
+        // }
+
+        deltaQTank = getTankDeltaQ(
+            sourceEnabled,
+            qSource,
+            qWaterHeating,
+            qTankLoss,
+            qPipeLoss
+        );
 
         // console.log("ENERGY BALANCE:");
         // console.log({
@@ -266,20 +260,25 @@ export const runSimulation = ( house: AppNode, tankNode: AppNode, heatPump: AppN
         // ============================================
         // 10. ОБЧИСЛЕННЯ ТЕМПЕРАТУРИ ВОДИ У БАКУ (t water tank)
         // ============================================
-        tTankWater = tTankWater + deltaQTank / (CP_WATER * vTank);
-
+        // tTankWater = tTankWater + deltaQTank / (CP_WATER * vTank);
+        tTankWater = updateTankTemperature(
+            tTankWater,
+            deltaQTank,
+            CP_WATER,
+            vTank
+        );
         // ============================================
         // 11. ЛОГІКА КЕРУВАННЯ ДЖЕРЕЛОМ
         // ============================================
-        console.log("CONTROL LOGIC:");
-        console.log({
-            tTankWater: tTankWater.toFixed(2),
-            deltaMin: deltaMin.toFixed(2),
-            deltaMax: deltaMax.toFixed(2),
-            tWaterNorm: tWaterNorm.toFixed(2),
-        });
-        console.log((tTankWater < (tWaterNorm - deltaMin)));
-        console.log((tTankWater > (tWaterNorm + deltaMax)));
+        // console.log("CONTROL LOGIC:");
+        // console.log({
+        //     tTankWater: tTankWater.toFixed(2),
+        //     deltaMin: deltaMin.toFixed(2),
+        //     deltaMax: deltaMax.toFixed(2),
+        //     tWaterNorm: tWaterNorm.toFixed(2),
+        // });
+        // console.log((tTankWater < (tWaterNorm - deltaMin)));
+        // console.log((tTankWater > (tWaterNorm + deltaMax)));
 
         if (tTankWater < (tWaterNorm - deltaMin)) {
             sourceEnabled = true;   // Вимкнути джерело? Ні - увімкнути

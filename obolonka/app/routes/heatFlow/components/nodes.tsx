@@ -225,7 +225,7 @@ export function createNodeData(type: string, index: number): NodeData {
                 type: 'tank',
                 label,
                 vTank: 30,            // літрів води у баку
-                kLostTank: 0.027,     // кВт*год/℃
+                kLostTank: 0.9,     // кВт*год/℃
                 tWaterNorm: 50,        // Номінальна температура
                 deltaMax: 25,           // +5 градусів
                 deltaMin: 25,          // -5 градусів
