@@ -1,0 +1,157 @@
+/* nodes.css */
+
+.custom-node {
+    padding: 10px;
+    border-radius: 6px;
+    min-width: 150px;
+    position: relative;
+    font-size: 13px;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+/* --- HOUSE NODE (Твій стиль) --- */
+.house-node {
+    background: #f0f7ff;
+    border: 1px solid #007acc;
+}
+
+.house-node:hover, .house-node.selected {
+    border-color: #005fa3;
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.2);
+    transform: translateY(-2px);
+}
+
+.house-node.selected {
+    background: #e8f2ff;
+}
+
+/* --- HEAT NODE (Твій стиль) --- */
+.heat-node {
+    background: #fff5f2;
+    border: 1px solid #e34c26;
+}
+
+.heat-node:hover, .heat-node.selected {
+    border-color: #c53a1b;
+    box-shadow: 0 4px 12px rgba(227, 76, 38, 0.2);
+    transform: scale(1.02);
+}
+
+.heat-node.selected {
+    background: #ffede6;
+}
+
+/* --- TANK NODE (Новий стиль у твоєму форматі) --- */
+.tank-node {
+    background: #f0fdf4; /* Світло-зелений фон */
+    border: 1px solid #10b981; /* Колір Emerald */
+}
+
+.tank-node:hover, .tank-node.selected {
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    transform: translateY(-2px);
+}
+
+
+/* --- SELECTION INDICATOR (Галочка) --- */
+.custom-node.selected::before {
+    content: "✓";
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 18px;
+    height: 18px;
+    background: #4caf50;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid white;
+    animation: fadeInScale 0.2s ease-out;
+    z-index: 20; /* Щоб була поверх всього */
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* --- DELETE BUTTON --- */
+.delete-button {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 22px;
+    height: 22px;
+    background: #ff4d4f;
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    transition: all 0.2s ease;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-node:hover .delete-button {
+    visibility: visible;
+    opacity: 1;
+}
+
+.delete-button:hover {
+    background: #f5222d;
+    transform: scale(1.1);
+}
+
+/* --- TOOLTIP & OTHERS --- */
+.custom-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    z-index: 100;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+}
+
+.custom-node:hover .custom-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+/* Кольори тултіпів */
+.house-node .custom-tooltip { background: #333; }
+.heat-node .custom-tooltip { background: #e34c26; }
+.tank-node .custom-tooltip { background: #10b981; }
+
+/* Стрілочки тултіпів */
+.custom-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+}
+
+.house-node .custom-tooltip::after { border-color: #333 transparent transparent transparent; }
+.heat-node .custom-tooltip::after { border-color: #e34c26 transparent transparent transparent; }
+.tank-node .custom-tooltip::after { border-color: #10b981 transparent transparent transparent; }

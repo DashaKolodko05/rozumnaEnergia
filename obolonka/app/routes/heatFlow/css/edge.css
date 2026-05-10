@@ -1,0 +1,25 @@
+.react-flow__edge.selected .react-flow__edge-path {
+    stroke: #e37e69 !important;
+    stroke-width: 3px !important;
+
+    filter: drop-shadow(0 0 5px #e37e69) !important;
+
+    stroke-opacity: 1 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-marker path {
+    fill: #e37e69 !important;
+    filter: drop-shadow(0 0 3px #e37e69);
+}
+
+.react-flow {
+  user-select: none;
+}
+
+.react-flow * {
+  user-select: none;
+}
+
+.react-flow__pane {
+    user-select: none;
+}
