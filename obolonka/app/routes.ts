@@ -5,4 +5,6 @@ export default [
     route("sivuKaksi", "routes/sivuKaksi/index.tsx"),
 
     route("heat-flow", "routes/heatFlow/index.tsx"),
+
+    route("sinusInvertor", "routes/sinusInvertor/index.jsx"),
 ] satisfies RouteConfig;
