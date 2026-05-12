@@ -264,7 +264,6 @@ export const runSimulation = ( house: AppNode, tankNode: AppNode, heatPump: AppN
         tTankWater = updateTankTemperature(
             tTankWater,
             deltaQTank,
-            CP_WATER,
             vTank
         );
         // ============================================
