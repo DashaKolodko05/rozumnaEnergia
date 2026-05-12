@@ -3,7 +3,6 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 
 import { API_BASE_URL } from "consts";
 
-
 export default function SimulationTab() {
   const [scenarios, setScenarios] = useState([]);
   
@@ -24,8 +23,10 @@ export default function SimulationTab() {
   const [advisorData, setAdvisorData] = useState<any>(null);
   const [confirmedCuts, setConfirmedCuts] = useState<any>({});
   const [loading, setLoading] = useState(false);
-  
   const [editingCutId, setEditingCutId] = useState<number | null>(null);
+
+  // СХОВИЩЕ ДЛЯ ГОДИН
+  const [originalHoursCache, setOriginalHoursCache] = useState<any>({});
 
   useEffect(() => { 
     fetch(`${API_BASE_URL}:6028/api/scenarios`).then(r => r.json()).then(d => { 
@@ -56,6 +57,25 @@ export default function SimulationTab() {
 
   const getFinalCapacityWh = () => {
     return simConfig.cap_mode === 'Ah' ? simConfig.cap * simConfig.batt_v : simConfig.cap;
+  };
+
+  // ФУНКЦІЯ ОТРИМАННЯ ОРИГІНАЛЬНОГО ГРАФІКА
+  const getOriginalWorkingHours = (s: any) => {
+    const uId = s.link_id || s.id;
+    let hw = originalHoursCache[uId] || s.working_hours || s.hours;
+
+    if (typeof hw === 'string') {
+      try { hw = JSON.parse(hw); } catch(e) {
+        hw = hw.replace(/[\[\]'"]/g, '').split(',').map((n: string) => Number(n.trim())).filter((n: number) => !isNaN(n));
+      }
+    }
+
+    if (Array.isArray(hw) && hw.length > 0) {
+      return hw.map(Number);
+    }
+    
+    // Якщо взагалі нічого не знайшли — повертаємо 48 годин як запобіжник
+    return Array.from({ length: 48 }).map((_, i) => i * 0.5);
   };
 
   const runSimulation = async () => {
@@ -101,6 +121,25 @@ export default function SimulationTab() {
     if (error) return alert(error);
 
     setLoading(true);
+
+    // ПЕРЕХОПЛЮВАЧ
+    let originalMap: any = {};
+    try {
+      const devRes = await fetch(`${API_BASE_URL}:6028/api/scenarios/${simConfig.scen_id}/devices`);
+      if (devRes.ok) {
+        const devicesList = await devRes.json();
+        devicesList.forEach((d: any) => {
+          const id = d.link_id || d.id || d.device_id;
+          if (id) originalMap[id] = d.working_hours || [];
+        });
+        console.log("✅ Перехоплені години з бази:", originalMap);
+        setOriginalHoursCache(originalMap);
+      }
+    } catch (err) {
+      console.warn("Не вдалося підтягнути години в обхід", err);
+    }
+
+    // ОСНОВНИЙ ЗАПИТ ДО РАДНИКА
     try {
       const res = await fetch(`${API_BASE_URL}:6028/api/advisor`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -118,10 +157,7 @@ export default function SimulationTab() {
         let suggsArray = result.suggestions || [];
         
         if (!Array.isArray(suggsArray)) {
-          suggsArray = Object.entries(suggsArray).map(([key, val]: any) => ({
-            ...val,
-            id: Number(key) 
-          }));
+          suggsArray = Object.entries(suggsArray).map(([key, val]: any) => ({ ...val, id: Number(key) }));
         }
         
         if(suggsArray.length === 0) return alert("✅ Сценарій ідеальний! Відключень не потрібно.");
@@ -312,21 +348,26 @@ export default function SimulationTab() {
                 <p className="text-orange-600 font-bold mb-1">⚠️ Виявлено пікове перевантаження інвертора!</p>
               )}
               <p className="text-sm text-gray-600">Оберіть прилади нижче, яким Радник пропонує змінити графік роботи.</p>
-            {/*Загальний лічильник економії */}
+            
+              {/* Загальний лічильник економії */}
               <div className="mt-4 pt-3 border-t border-gray-200">
                 <p className="text-green-600 font-bold text-lg">
                   📉 Загальна економія: -{
                     advisorData.suggestions.reduce((sum: number, s: any) => {
                       const uId = s.link_id || s.id;
                       const cCuts = confirmedCuts[uId] || [];
+                      const origWorking = getOriginalWorkingHours(s);
+                      
+                      // Рахуємо ТІЛЬКИ ті відключення, які реально були робочими годинами
+                      const validCuts = cCuts.filter((h: number) => origWorking.includes(h));
                       const oCuts = s.final_cuts || s.suggested_cuts || [];
                       const p = Number(s.p_nom) || Number(s.p) || (oCuts.length > 0 ? (Number(s.energy_saved_wh) / (oCuts.length * 0.5)) : 0);
-                      return sum + (cCuts.length * p * 0.5);
+                      
+                      return sum + (validCuts.length * p * 0.5);
                     }, 0).toFixed(1)
                   } Вт·год
                 </p>
               </div>
-
             </div>
 
             <div className="space-y-4 mb-6">
@@ -336,22 +377,14 @@ export default function SimulationTab() {
                 const isSelected = currentCuts.length > 0;
                 const isEditing = editingCutId === uniqueId;
                 
-                // БРОНЯ ДЛЯ ПАРАМЕТРІВ: Якщо бекенд не дав годин або потужності - рятуємо ситуацію!
+                const origWorking = getOriginalWorkingHours(s);
+                const validCuts = currentCuts.filter((h: number) => origWorking.includes(h));
+                
                 const origCuts = s.final_cuts || s.suggested_cuts || [];
                 const p_nom = Number(s.p_nom) || Number(s.p) || (origCuts.length > 0 ? (Number(s.energy_saved_wh) / (origCuts.length * 0.5)) : 0);
-                let rawHours = s.working_hours || s.hours;
+                const energySaved = validCuts.length * p_nom * 0.5;
                 
-                // Якщо бекенд прислав години як строку (наприклад SQLite JSON) - розпаковуємо
-                if (typeof rawHours === 'string') {
-                  try { rawHours = JSON.parse(rawHours); } catch(e) { rawHours = []; }
-                }
-                
-                // Якщо бекенд ВЗАГАЛІ не надіслав годин - створюємо 48 слотів, щоб кнопки з'явилися 100%!
-                if (!Array.isArray(rawHours) || rawHours.length === 0) {
-                  rawHours = Array.from({ length: 48 }).map((_, i) => i * 0.5);
-                }
-
-                const energySaved = currentCuts.length * p_nom * 0.5;
+                const allDaySlots = Array.from({ length: 48 }).map((_, i) => i * 0.5);
 
                 return (
                   <div key={uniqueId} className={`p-4 border-2 rounded-lg transition-colors ${isSelected ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -377,10 +410,10 @@ export default function SimulationTab() {
 
                     {isSelected && !isEditing && (
                       <div className="mt-3 ml-8 text-sm text-gray-700 bg-white p-3 rounded border border-orange-200">
-                        <p>⚡ Економія: <span className="font-bold text-green-600">-{energySaved.toFixed(2)} Вт·год</span></p>
-                        <p className="mt-1">⏱ Відключити слоти: 
+                        <p>⚡ Реальна економія: <span className="font-bold text-green-600">-{energySaved.toFixed(2)} Вт·год</span></p>
+                        <p className="mt-1">⏱ Відключено активних слотів: 
                           <span className="font-mono bg-gray-100 px-1 rounded ml-1">
-                            {currentCuts.map(formatHour).join(', ')}
+                            {validCuts.length > 0 ? validCuts.map(formatHour).join(', ') : "Немає (у цей час прилад і так не працював)"}
                           </span>
                         </p>
                       </div>
@@ -390,14 +423,26 @@ export default function SimulationTab() {
                       <div className="mt-4 ml-8 p-4 bg-white border border-blue-200 rounded-lg shadow-inner">
                         <p className="text-sm font-bold mb-1 text-gray-800">Ручне налаштування годин роботи:</p>
                         <p className="text-xs text-gray-500 mb-3">
-                          <span className="inline-block w-3 h-3 bg-green-100 border border-green-400 rounded-full mr-1"></span> Працює
-                          <span className="inline-block w-3 h-3 bg-red-500 border border-red-600 rounded-full ml-3 mr-1"></span> Відключено
+                          <span className="inline-block w-3 h-3 bg-green-400 border border-green-600 rounded-full mr-1"></span> Працює
+                          <span className="inline-block w-3 h-3 bg-red-500 border border-red-700 rounded-full ml-3 mr-1"></span> Відключено вручну
+                          <span className="inline-block w-3 h-3 bg-red-50 border border-red-200 rounded-full ml-3 mr-1"></span> Не працює за планом
                         </p>
                         
                         <div className="flex flex-wrap gap-2">
-                          {/* ТЕПЕР МИ ВИКОРИСТОВУЄМО НАШУ БРОНЬОВАНУ ЗМІННУ rawHours */}
-                          {rawHours.map((h: number) => {
+                          {allDaySlots.map((h: number) => {
+                            const isOriginallyWorking = origWorking.includes(h);
                             const isCut = currentCuts.includes(h);
+                            
+                            // Якщо прилад в цей час за планом НЕ ПРАЦЮВАВ - малюємо неактивну бліду кнопку
+                            if (!isOriginallyWorking) {
+                              return (
+                                <div key={h} title="Вимкнено за графіком" className="text-xs px-3 py-1.5 rounded border-2 font-bold shadow-sm bg-red-50 text-red-300 border-red-100 cursor-not-allowed opacity-70">
+                                  {formatHour(h)}
+                                </div>
+                              );
+                            }
+
+                            // Якщо прилад працює за планом, даємо можливість його "відрізати"
                             return (
                               <button 
                                 key={h} 
@@ -431,7 +476,7 @@ export default function SimulationTab() {
                         </div>
                         <div className="mt-4 pt-3 border-t flex justify-between items-center text-sm">
                           <span>Вже зекономлено: <span className="font-bold text-green-600">-{energySaved.toFixed(2)} Вт·год</span></span>
-                          <span className="text-gray-500 font-bold">{currentCuts.length} слотів відключено</span>
+                          <span className="text-gray-500 font-bold">{validCuts.length} слотів відключено</span>
                         </div>
                       </div>
                     )}
