@@ -8,10 +8,12 @@ export default function ScenariosTab() {
   const [scenDevices, setScenDevices] = useState([]);
   const [equipment, setEquipment] = useState([]);
 
-  // Стан форми
+  // Стан для створення нового сценарію
+  const [newScenName, setNewScenName] = useState("");
+
+  // Стан форми приладів
   const [devForm, setDevForm] = useState({ eq_id: '', cab_len: '15', cab_sq: '2.5', cab_mat: 'Мідь', prio: 3, hours: [] as number[] });
   
-  // Стан редагування (якщо null - створюємо, якщо число - редагуємо)
   const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
 
   const fetchScenarios = () => fetch(`${API_BASE_URL}:6028/api/scenarios`).then(r => r.json()).then(setScenarios);
@@ -24,10 +26,34 @@ export default function ScenariosTab() {
     }); 
   }, []);
 
+  // --- НОВІ ФУНКЦІЇ ДЛЯ СЦЕНАРІЇВ ---
+  const handleCreateScenario = async () => {
+    if (!newScenName.trim()) return alert("❌ Введіть назву нового сценарію!");
+    await fetch(`${API_BASE_URL}:6028/api/scenarios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newScenName, v_min: 198.0, v_max: 253.0 }) // Стандартні межі напруги
+    });
+    setNewScenName("");
+    fetchScenarios();
+  };
+
+  const handleDeleteScenario = async (id: number, name: string) => {
+    if (confirm(`Ви впевнені, що хочете видалити сценарій "${name}" та всі його прилади?`)) {
+      await fetch(`${API_BASE_URL}:6028/api/scenarios/${id}`, { method: 'DELETE' });
+      if (selectedScen === id) {
+        setSelectedScen(null);
+        setScenDevices([]);
+      }
+      fetchScenarios();
+    }
+  };
+  // -----------------------------------
+
   const loadScenDevices = (id: number) => {
     setSelectedScen(id);
     fetch(`${API_BASE_URL}:6028/api/scenarios/${id}/devices`).then(r => r.json()).then(setScenDevices);
-    handleCancel(); // Скидаємо форму при зміні сценарію
+    handleCancel();
   };
 
   const toggleHour = (h: number) => {
@@ -36,14 +62,12 @@ export default function ScenariosTab() {
     }));
   };
 
-  // Красиве форматування годин (напр. 8.5 -> 08:30)
   const formatHour = (h: number) => {
     const hours = Math.floor(h).toString().padStart(2, '0');
     const mins = h % 1 === 0 ? '00' : '30';
     return `${hours}:${mins}`;
   };
 
-  // ВАЛІДАЦІЯ
   const validateForm = () => {
     if (!selectedScen) return "❌ Оберіть сценарій зі списку зліва!";
     if (devForm.hours.length === 0) return "❌ Оберіть хоча б одну годину роботи!";
@@ -66,13 +90,11 @@ export default function ScenariosTab() {
     };
 
     if (editingLinkId) {
-      // ОНОВЛЕННЯ ІСНУЮЧОГО
       await fetch(`${API_BASE_URL}:6028/api/devices/${editingLinkId}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      // ДОДАВАННЯ НОВОГО
       await fetch(`${API_BASE_URL}:6028/api/scenarios/${selectedScen}/devices`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -80,13 +102,11 @@ export default function ScenariosTab() {
     }
 
     loadScenDevices(selectedScen as number);
-    handleCancel(); // Очищуємо форму
+    handleCancel();
   };
 
   const handleEdit = (device: any) => {
     setEditingLinkId(device.link_id);
-    
-    // Шукаємо правильний ID обладнання за назвою
     const matchedEq = equipment.find((e: any) => e.name === device.name);
 
     setDevForm({
@@ -116,21 +136,51 @@ export default function ScenariosTab() {
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       
       {/* 1 КОЛОНКА: СПИСОК СЦЕНАРІЇВ */}
-      <div className="bg-white p-4 rounded-lg shadow h-fit">
+      <div className="bg-white p-4 rounded-lg shadow h-fit flex flex-col">
         <h2 className="text-lg font-bold mb-4 text-gray-800">📂 Сценарії</h2>
-        <ul className="space-y-2">
+        
+        <ul className="space-y-2 mb-4 max-h-[60vh] overflow-y-auto">
           {scenarios.map((s: any) => (
             <li 
               key={s.id} 
-              onClick={() => loadScenDevices(s.id)} 
-              className={`p-3 rounded-lg cursor-pointer font-medium transition duration-150 shadow-sm border
+              className={`flex justify-between items-center p-3 rounded-lg cursor-pointer font-medium transition duration-150 shadow-sm border
                 ${selectedScen === s.id ? 'bg-blue-600 text-white border-blue-700' : 'bg-gray-50 hover:bg-blue-50 border-gray-200 text-gray-700'}`}
+              onClick={() => loadScenDevices(s.id)}
             >
-              {s.name}
+              <span className="truncate pr-2">{s.name}</span>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleDeleteScenario(s.id, s.name); }}
+                className={`text-sm font-bold px-2 py-1 rounded transition ${selectedScen === s.id ? 'text-white hover:bg-red-500' : 'text-red-500 hover:bg-red-100'}`}
+                title="Видалити сценарій"
+              >
+                ✕
+              </button>
             </li>
           ))}
-          {scenarios.length === 0 && <p className="text-gray-500 text-sm">Немає сценаріїв</p>}
+          {scenarios.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Немає сценаріїв</p>}
         </ul>
+
+        {/* Форма створення нового сценарію */}
+        <div className="mt-auto pt-4 border-t border-gray-200">
+          <label className="block text-xs font-bold text-gray-500 mb-1">Створити новий</label>
+          <div className="flex gap-2">
+            <input 
+              type="text" 
+              placeholder="Назва..." 
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-300 outline-none text-sm"
+              value={newScenName} 
+              onChange={e => setNewScenName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleCreateScenario()}
+            />
+            <button 
+              onClick={handleCreateScenario} 
+              className="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded transition shadow"
+              title="Додати сценарій"
+            >
+              +
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 3 КОЛОНКИ: ФОРМА ТА ТАБЛИЦЯ */}
@@ -173,7 +223,7 @@ export default function ScenariosTab() {
                 <input type="number" min="1" className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-300 outline-none" value={devForm.cab_len} onChange={e => setDevForm({ ...devForm, cab_len: e.target.value })} />
               </div>
               <div className="w-1/2">
-                <label className="block text-xs font-bold text-gray-500 mb-1">Переріз</label>
+                <label className="block text-xs font-bold text-gray-500 mb-1">Переріз (мм^2)</label>
                 <input type="number" min="0.5" step="0.5" className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-300 outline-none" value={devForm.cab_sq} onChange={e => setDevForm({ ...devForm, cab_sq: e.target.value })} />
               </div>
             </div>
