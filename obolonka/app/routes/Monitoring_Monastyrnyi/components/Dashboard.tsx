@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
+import { NavLink } from "react-router";
 import {
     Sun, Battery, Zap, Activity, TrendingUp, Gauge, ArrowBigRightDashIcon,
     BarChart2
@@ -14,7 +14,6 @@ import type { ConsumerDevice } from "../types.ts";
 
 
 export const Dashboard = ({history, status, devices, isMqttConnected, ingestorInfo, isSimulatorOn, isSimulatorPending, onToggleSimulator}: any) => {
-    const navigate = useNavigate();
     const [hiddenKeys, setHiddenKeys] = useState<Record<string, boolean>>({});
 
     const toggleKey = (e: any) => {
@@ -24,9 +23,9 @@ export const Dashboard = ({history, status, devices, isMqttConnected, ingestorIn
 
     return (
         <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto space-y-8 w-full bg-slate-50 font-sans">
-            <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors">
+            <NavLink to="/" className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors">
                 <ArrowLeft size={20} /> Повернутися на головну
-            </button>
+            </NavLink>
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
                 <div className="flex items-center gap-4">
                     <div>
@@ -35,13 +34,13 @@ export const Dashboard = ({history, status, devices, isMqttConnected, ingestorIn
                         <p className="text-slate-500 text-sm">Моніторинг мережі в реальному часі</p>
                     </div>
 
-                    <button
-                        onClick={() => navigate('/Monitoring_Monastyrnyi/comparison')}
+                    <NavLink
+                        to='/Monitoring_Monastyrnyi/comparison'
                         className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg
                         shadow-indigo-100 hover:bg-indigo-600 transition-all active:scale-95 cursor-pointer">
                         <BarChart2 size={18} />
                         Відстеження даних
-                    </button>
+                    </NavLink>
                 </div>
                 <div
                     className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${isMqttConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
@@ -65,9 +64,12 @@ export const Dashboard = ({history, status, devices, isMqttConnected, ingestorIn
                     className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-transform hover:scale-[1.01]">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-bold text-slate-800">Генерація vs Споживання енергії</h2>
-                        <ArrowBigRightDashIcon
-                            className="cursor-pointer text-orange-600 self-end border rounded-lg hover:bg-emerald-500 hover:text-slate-800 transition-transform hover:scale-110"
-                            size={24} onClick={() => navigate('/Monitoring_Monastyrnyi/analytics/production')}/>
+                        <NavLink to="/Monitoring_Monastyrnyi/analytics/production">
+                            <ArrowBigRightDashIcon
+                                className="cursor-pointer text-orange-600 self-end border rounded-lg hover:bg-emerald-500 hover:text-slate-800 transition-transform hover:scale-110"
+                                size={24}/>
+                        </NavLink>
+
                     </div>
 
                     <div className="h-75 w-full">
@@ -118,15 +120,15 @@ export const Dashboard = ({history, status, devices, isMqttConnected, ingestorIn
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="transition-transform hover:scale-[1.02]">
                     <VAGraph title="Сонячні панелі" icon="☀️" data={history} vKey="solar_v" iKey="solar_i" vColor="#f59e0b"
-                             iColor="#10b981" onClickMove={() => navigate('/Monitoring_Monastyrnyi//analytics/solar')}/>
+                             iColor="#10b981" onClickMoveTo='/Monitoring_Monastyrnyi/analytics/solar'/>
                 </div>
                 <div className="transition-transform hover:scale-[1.02]">
                     <VAGraph title="MPPT" icon="🔋" data={history} vKey="charge_v" iKey="charge_i" vColor="#3b82f6"
-                             iColor="#8b5cf6" onClickMove={() => navigate('/Monitoring_Monastyrnyi//analytics/charge')}/>
+                             iColor="#8b5cf6" onClickMoveTo='/Monitoring_Monastyrnyi/analytics/charge'/>
                 </div>
                 <div className="transition-transform hover:scale-[1.02]">
                     <VAGraph title="Споживання" icon="⚡" data={history} vKey="discharge_v" iKey="discharge_i" vColor="#ef4444"
-                             iColor="#6366f1" onClickMove={() => navigate('/Monitoring_Monastyrnyi//analytics/discharge')}/>
+                             iColor="#6366f1" onClickMoveTo='/Monitoring_Monastyrnyi/analytics/discharge'/>
                 </div>
             </div>
 

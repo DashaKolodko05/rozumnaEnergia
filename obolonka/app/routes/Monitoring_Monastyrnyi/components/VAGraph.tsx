@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import {ArrowBigRightDashIcon} from "lucide-react"
+import { NavLink } from "react-router";
 
 interface VAGraphProps {
     title: string;
@@ -10,10 +11,10 @@ interface VAGraphProps {
     vColor: string;
     iColor: string;
     icon: string;
-    onClickMove: () => void;
+    onClickMoveTo: string;
 }
 
-const VAGraph: React.FC<VAGraphProps> = ({ title, data, vKey, iKey, vColor, iColor, icon, onClickMove }) => {
+const VAGraph: React.FC<VAGraphProps> = ({ title, data, vKey, iKey, vColor, iColor, icon, onClickMoveTo }) => {
     const [hiddenKeys, setHiddenKeys] = useState<Record<string, boolean>>({});
     data = data.map(d => ({
         ...d,
@@ -32,7 +33,9 @@ const VAGraph: React.FC<VAGraphProps> = ({ title, data, vKey, iKey, vColor, iCol
                     <span className="text-xl">{icon}</span>
                     <h3 className="text-xl font-bold text-slate-800">{title}: В & A</h3>
                 </div>
-                <ArrowBigRightDashIcon className="cursor-pointer text-indigo-500 self-end border rounded-lg hover:bg-blue-100 hover:text-rose-700 transition-transform hover:scale-110" size={24} onClick={onClickMove}/>
+                <NavLink to={onClickMoveTo} >
+                    <ArrowBigRightDashIcon className="cursor-pointer text-indigo-500 self-end border rounded-lg hover:bg-blue-100 hover:text-rose-700 transition-transform hover:scale-110" size={24}/>
+                </NavLink>
             </div>
 
             <div className="h-[250px] w-full">

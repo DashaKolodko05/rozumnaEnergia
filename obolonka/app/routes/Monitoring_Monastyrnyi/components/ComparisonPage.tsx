@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { NavLink } from "react-router";
 import { ArrowLeft, RefreshCw, Calendar, Settings2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const ComparisonPage = () => {
-    const navigate = useNavigate();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -121,9 +120,9 @@ const ComparisonPage = () => {
     return (
         <div className="min-h-screen bg-slate-50 p-4 md:p-8">
             <div className="max-w-6xl mx-auto space-y-6">
-                <button onClick={() => navigate('/Monitoring_Monastyrnyi/')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors">
+                <NavLink to="/Monitoring_Monastyrnyi/" className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors">
                     <ArrowLeft size={20} /> Повернутися назад
-                </button>
+                </NavLink>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     {/* Панель контролю */}

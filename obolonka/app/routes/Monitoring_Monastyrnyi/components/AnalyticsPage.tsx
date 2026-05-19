@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams} from 'react-router-dom';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { NavLink } from "react-router";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const AnalyticsPage = () => {
     const { type } = useParams();
-    const navigate = useNavigate();
     const [data, setData] = useState([]);
     const [range, setRange] = useState('1h');
     const [loading, setLoading] = useState(false);
@@ -79,9 +79,9 @@ const AnalyticsPage = () => {
     return (
         <div className="min-h-screen bg-slate-50 p-8">
             <div className="max-w-6xl mx-auto space-y-6">
-                <button onClick={() => navigate('/Monitoring_Monastyrnyi')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold">
+                <NavLink to="/Monitoring_Monastyrnyi/" className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold">
                     <ArrowLeft size={20} /> Повернутися назад
-                </button>
+                </NavLink>
 
                 <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
                     <div className="flex justify-between items-center mb-8">
