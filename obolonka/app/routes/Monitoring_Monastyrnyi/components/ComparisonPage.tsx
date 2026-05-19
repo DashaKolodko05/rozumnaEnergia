@@ -10,8 +10,8 @@ const ComparisonPage = () => {
     const [error, setError] = useState<string | null>(null);
     
     // Стандартний діапазон - останні 24 год
-    const now = new Date(now.getTime() - 24 * 60 * 60 * 1000 + 3*60*60*1000);
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000 + 3*60*60*1000);
+    const now = new Date(Date.now() + 3*60*60*1000);
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000 + 3*60*60*1000);
     
     const [startTime, setStartTime] = useState(yesterday.toISOString().slice(0, 16));
     const [endTime, setEndTime] = useState(now.toISOString().slice(0, 16));

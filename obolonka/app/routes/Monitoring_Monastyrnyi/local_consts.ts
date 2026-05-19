@@ -1,6 +1,5 @@
 import {API_BASE_URL} from "../../../consts"
 
-
 export const HISTORY_API_URL = `http://${API_BASE_URL}:6032/api/history`;
 export const STATUS_API_URL = `http://${API_BASE_URL}:6032/api/status`;
 export const MQTT_WEBSOCKETS_API_URL = `ws://${API_BASE_URL}:6031`
