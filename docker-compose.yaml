@@ -21,6 +21,19 @@ services:
     networks:
       - mererza
 
+  backend-kravchenko:
+    image: nastensii/smart-energy-backend:latest
+    container_name: smart_energy_api_kravchenko
+    ports:
+      - "6006:8000"
+    environment:
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=secretpassword_smartenergy6
+      - MQTT_BROKER=broker.hivemq.com
+      - MQTT_PORT=1883
+    networks:
+      - mererza
+
 networks:
   mererza:
     driver: bridge
