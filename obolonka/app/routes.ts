@@ -10,4 +10,6 @@ export default [
     route("sinusInvertor", "routes/sinusInvertor/index.jsx"),
 
     route("iot-gateway", "routes/iotGateway/index.jsx"),
+    route("cryptomonitoring_Hubin", "routes/cryptomonitoring_Hubin/index.jsx"),
+
 ] satisfies RouteConfig;

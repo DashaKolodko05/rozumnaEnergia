@@ -1,0 +1,196 @@
+.first-color { background: #fda403; }
+.second-color { background: #e8751a; }
+.third-color { background: #c51350; }
+.fourth-color { background: #8a1253; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #fdfdfd;
+    color: #333;
+}
+
+nav {
+    background: #c51350;
+    padding: 10px 20px;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover {
+    color: #fda403;
+}
+
+h1, h2, h3 {
+    text-align: center;
+    color: #8a1253;
+    margin-top: 20px;
+}
+
+form {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fda403;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+form input[type="text"],
+form input[type="password"],
+form select,
+.textarea-field {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+form input[type="submit"],
+form button {
+    background: #c51350;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+form input[type="submit"]:hover,
+form button:hover {
+    background: #8a1253;
+}
+
+.form-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fda403;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+table {
+    width: 95%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+table th {
+    background: #e8751a;
+    color: #fff;
+    padding: 10px;
+    text-align: left;
+}
+
+table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.chart-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #fdfdfd;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/*.textarea-field {
+    width: 97%;
+    padding: 8px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    resize: vertical;
+}*/
+
+canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.form-row label {
+    width: 120px;
+}
+
+.form-row input,
+.form-row select {
+    flex: 1;
+    padding: 6px;
+}
+
+@media (max-width: 768px) {
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    form {
+        width: 90%;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    table tr {
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        background: #fda403;
+    }
+
+    table th {
+        display: none;
+    }
+
+    table td {
+        border: none;
+        padding: 5px;
+        text-align: left;
+    }
+
+    table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        color: #8a1253;
+    }
+
+    .chart-container {
+        width: 95%;
+        margin: 15px auto;
+        padding: 10px;
+    }
+}

@@ -31,9 +31,32 @@ services:
       - INFLUX_TOKEN=secretpassword_smartenergy6
       - MQTT_BROKER=broker.hivemq.com
       - MQTT_PORT=1883
+
+  backend_yaroslav:
+    image: yaroslav333/my-backend:latest
+    ports:
+      - "6001:5000"
+    restart: always
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/solar_system
+    networks:
+      - mererza
+    depends_on:
+      - mongodb
+  
+  mongodb:
+    image: mongo:6
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
     networks:
       - mererza
 
 networks:
   mererza:
     driver: bridge
+
+volumes:
+  mongo_data:
