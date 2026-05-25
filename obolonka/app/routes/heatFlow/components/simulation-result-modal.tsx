@@ -172,8 +172,16 @@ const SimulationResultsModal: React.FC<Props> = ({ isOpen, data, onClose }) => {
                                 <div className="h-72">
                                     <LineChart data={data}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="time" />
                                         <YAxis label={{ value: "V (м³)", angle: -90, position: 'insideLeft' }} />
+                                        <XAxis
+                                            dataKey="time"
+                                            label={{
+                                                value: "t (години)",
+                                                position: "insideBottom",
+                                                offset: -5
+                                            }}
+                                        />
+                                        <Legend wrapperStyle={{ bottom: -5 }} />
                                         <Tooltip />
                                         <Line dataKey="vWater" stroke="#3b82f6" dot={false} name="Обʼєм" />
                                     </LineChart>
@@ -185,10 +193,17 @@ const SimulationResultsModal: React.FC<Props> = ({ isOpen, data, onClose }) => {
                                 <div className="h-72">
                                     <LineChart data={data}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="time" />
                                         <YAxis label={{ value: "T (°C)", angle: -90, position: 'insideLeft' }} />
+                                        <XAxis
+                                            dataKey="time"
+                                            label={{
+                                                value: "t (години)",
+                                                position: "insideBottom",
+                                                offset: -5
+                                            }}
+                                        />
+                                        <Legend wrapperStyle={{ bottom: -5 }} />
                                         <Tooltip />
-                                        <Legend />
                                         <Line dataKey="tTank" stroke="#1053b9" dot={false} strokeWidth={2} name="T баку" />
                                         <Line dataKey="tPipeOut" stroke="#d46306" dot={false} strokeWidth={2} name="T труба" />
                                     </LineChart>
@@ -200,10 +215,17 @@ const SimulationResultsModal: React.FC<Props> = ({ isOpen, data, onClose }) => {
                                 <div className="h-72">
                                     <LineChart data={data}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="time" />
                                         <YAxis label={{ value: "Q (кДж)", angle: -90, position: 'insideLeft' }} />
+                                        <XAxis
+                                            dataKey="time"
+                                            label={{
+                                                value: "t (години)",
+                                                position: "insideBottom",
+                                                offset: -5
+                                            }}
+                                        />
+                                        <Legend wrapperStyle={{ bottom: -5 }} />
                                         <Tooltip />
-                                        <Legend />
                                         <Line dataKey="qSource" stroke="#f59e0b" dot={false} name="Джерело" />
                                         <Line dataKey="qWaterHeating" stroke="#ef4444" dot={false} name="Споживання" />
                                         <Line dataKey="deltaQTank" stroke="#3b82f6" dot={false} name="ΔQ баку" />
@@ -216,10 +238,17 @@ const SimulationResultsModal: React.FC<Props> = ({ isOpen, data, onClose }) => {
                                 <div className="h-72">
                                     <LineChart data={data}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="time" />
                                         <YAxis label={{ value: "Q (кДж)", angle: -90, position: 'insideLeft' }} />
+                                        <XAxis
+                                            dataKey="time"
+                                            label={{
+                                                value: "t (години)",
+                                                position: "insideBottom",
+                                                offset: -5
+                                            }}
+                                        />
+                                        <Legend wrapperStyle={{ bottom: -5 }} />
                                         <Tooltip />
-                                        <Legend />
                                         <Line dataKey="qPipeLoss" stroke="#55a1f7" dot={false} name="Труба" />
                                         <Line dataKey="qTankLoss" stroke="#64748b" dot={false} name="Бак" />
                                     </LineChart>
@@ -231,8 +260,16 @@ const SimulationResultsModal: React.FC<Props> = ({ isOpen, data, onClose }) => {
                                 <div className="h-56">
                                     <LineChart data={data}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="time" />
                                         <YAxis domain={[0, 1]} ticks={[0, 1]} />
+                                        <XAxis
+                                            dataKey="time"
+                                            label={{
+                                                value: "t (години)",
+                                                position: "insideBottom",
+                                                offset: -5
+                                            }}
+                                        />
+                                        <Legend wrapperStyle={{ bottom: -5 }} />
                                         <Tooltip />
                                         <Line dataKey="sourceOn" stroke="#22c55e" dot={false} strokeWidth={2} name="ON/OFF" />
                                     </LineChart>
@@ -244,8 +281,16 @@ const SimulationResultsModal: React.FC<Props> = ({ isOpen, data, onClose }) => {
                                 <div className="h-56">
                                     <LineChart data={data}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="time" />
                                         <YAxis />
+                                        <XAxis
+                                            dataKey="time"
+                                            label={{
+                                                value: "t (години)",
+                                                position: "insideBottom",
+                                                offset: -5
+                                            }}
+                                        />
+                                        <Legend wrapperStyle={{ bottom: -5 }} />
                                         <Tooltip />
                                         <Line dataKey="cop" stroke="#8b5cf6" dot={false} name="COP" />
                                     </LineChart>

@@ -439,7 +439,7 @@ export function ConfigForm({ node, onUpdate, onClose }: ConfigFormProps) {
                                                 {/* Рядок 14: Швидкість */}
                                                 <tr>
                                                     <td className="px-3 py-2.5 text-xs text-gray-500 text-center">14</td>
-                                                    <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">Швидкість потоку води (м/c)</td>
+                                                    <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">Швидкість потоку води (м/год)</td>
                                                     <td className="px-3 py-2.5 text-xs font-mono text-blue-600 font-bold">V_flow</td>
                                                     <td className="px-3 py-2.5">
                                                         <input type="number" step="0.1" className="w-full bg-blue-50/30 border border-blue-100 rounded-lg px-2 py-1 text-sm outline-none focus:border-blue-500 transition-colors"
