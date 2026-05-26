@@ -8,11 +8,13 @@ export default [
     route("heat-flow", "routes/heatFlow/index.tsx"),
 
     route("sinusInvertor", "routes/sinusInvertor/index.jsx"),
+
     route("Monitoring_Monastyrnyi", "routes/Monitoring_Monastyrnyi/App.tsx"),
     route("Monitoring_Monastyrnyi/analytics/:type", "routes/Monitoring_Monastyrnyi/components/AnalyticsPage.tsx"),
     route("Monitoring_Monastyrnyi/comparison", "routes/Monitoring_Monastyrnyi/components/ComparisonPage.tsx"),
 
     route("iot-gateway", "routes/iotGateway/index.jsx"),
+    
     route("cryptomonitoring_Hubin", "routes/cryptomonitoring_Hubin/index.jsx"),
 
 ] satisfies RouteConfig;
