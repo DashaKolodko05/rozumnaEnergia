@@ -7,6 +7,12 @@ services:
     networks:
       - mererza
 
+  backend-service:
+    # build: ./backend
+    image: dkolodko/diplom-backend:latest
+    ports:
+      - "6005:8000" 
+    restart: always
 
   backend_troian:
     image: vitaliktroian04/smart-energy-stability:latest
